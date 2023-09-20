@@ -1,9 +1,9 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Node template
 # Logs
-/idea/
-/bin/
-/obj/
+/.idea/
+/MyApp/bin/
+/MyApp/obj/
 # *.log
 # npm-debug.log*
 # yarn-debug.log*
