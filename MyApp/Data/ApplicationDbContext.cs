@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MyApp.Model.Pet;
 
 namespace MyApp.Data;
 
@@ -13,4 +14,6 @@ public class ApplicationDbContext: IdentityDbContext<IdentityUser>
     {
         base.OnModelCreating(builder);
     }
+    
+    public DbSet<Pet> Pets { get; set; }
 }

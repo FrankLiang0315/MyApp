@@ -46,6 +46,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -54,6 +56,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors(options =>
+{
+    options.AllowAnyOrigin(); // 允許來自任何源的請求
+    options.AllowAnyMethod(); // 允許任何 HTTP 方法
+    options.AllowAnyHeader(); // 允許任何標頭
+});
 
 app.UseHttpsRedirection();
 
