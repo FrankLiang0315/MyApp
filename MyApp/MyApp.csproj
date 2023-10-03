@@ -21,6 +21,7 @@
 
 
     <ItemGroup>
+      <Folder Include="Files\Email\" />
       <Folder Include="Migrations\" />
     </ItemGroup>
 

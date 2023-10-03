@@ -4,10 +4,13 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Web;
 using Microsoft.AspNetCore.Authorization;
 using MyApp.Types;
 using MyApp.Model;
 using MyApp.Model.Auth;
+using MyApp.Tools;
+using NuGet.Protocol;
 
 namespace MyApp.Controllers
 {
@@ -34,7 +37,6 @@ namespace MyApp.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _userManager.FindByNameAsync(request.Username);
-            var user2 = await _userManager.FindByIdAsync(request.Username);
             if (user != null && await _userManager.CheckPasswordAsync(user, request.Password))
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
@@ -134,6 +136,74 @@ namespace MyApp.Controllers
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
 
+        
+        [HttpPost]
+        [Authorize]
+        [Route("user-info")]
+        public async Task<IActionResult> UserInfo()
+        {
+            string jwtToken = HttpContext.Request.Headers["Authorization"];
+            return Ok(new Response<UserInfo> { Status = "Success", Data = ReadToken(jwtToken) });
+        }
+
+        [HttpPost]
+        [Route("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest model)
+        {
+            
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            
+            if (user == null)
+            {
+                // 使用者不存在，可能顯示錯誤信息
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User not exists!" });
+            }
+            
+            // 生成重設密碼令牌並發送郵件
+            var token = HttpUtility.UrlEncode(await _userManager.GeneratePasswordResetTokenAsync(user));
+            var callbackUrl = _configuration["URL:Frontend"] + $"/reset-password?email={user.Email}&token={token}";
+            
+            // HTML 檔案的路徑
+            string htmlFilePath = "Files/Email/mail.html";
+            
+            // 讀取 HTML 檔案的內容並儲存在字串中
+            string htmlContent = System.IO.File.ReadAllText(htmlFilePath);
+            
+            // 現在你可以使用 htmlContent 字串進行操作
+            var html = htmlContent.Replace("{resetPasswordUrl}", callbackUrl);
+            MailSever sever = new MailSever(_configuration);
+            sever.SendMail(model.Email,"Reset Password", html);
+            return Ok(new Response { Status = "Success",Message = callbackUrl, Data = html });
+        }
+        
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequest model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    // 使用者不存在，可能顯示錯誤信息
+                    return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User not exists!" });
+                }
+
+                // 使用者驗證通過，更新密碼
+                var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+                if (result.Succeeded)
+                {
+                    return Ok(new Response { Status = "Success" });
+                }
+
+                // 密碼重設失敗，可能顯示錯誤信息
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = $"Reset Error! {result.Errors.FirstOrDefault().ToJson()}" });
+            }
+            return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User not exists!" });
+        }
+
+        // private function
         private JwtSecurityToken GetToken(List<Claim> authClaims)
         {
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
@@ -149,16 +219,6 @@ namespace MyApp.Controllers
 
             return token;
         }
-        
-        [HttpPost]
-        [Authorize]
-        [Route("user-info")]
-        public async Task<IActionResult> UserInfo()
-        {
-            string jwtToken = HttpContext.Request.Headers["Authorization"];
-            return Ok(new Response<UserInfo> { Status = "Success", Data = ReadToken(jwtToken) });
-        }
-        
         private UserInfo ReadToken(string? originalToken)
         {
             // 從請求的標頭中獲取 JWT
@@ -179,12 +239,7 @@ namespace MyApp.Controllers
                 Roles.Add(claim.Value);
             }
             
-            // 在這裡你可以使用用戶資料進行相應的處理
-            // 例如，根據角色授權用戶訪問特定資源
-            
-            
             return new UserInfo {UserId = UserId, Roles = Roles};
-            // return "123";
         }
     }
 }
