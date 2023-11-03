@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using MyApp.Types;
 using MyApp.Model;
 using MyApp.Model.Auth;
+using MyApp.Model.User;
 using MyApp.Tools;
 using NuGet.Protocol;
 
@@ -16,14 +17,14 @@ namespace MyApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthenticateController : ControllerBase
+    public class AuthenticateController : InfoController
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
 
         public AuthenticateController(
-            UserManager<IdentityUser> userManager,
+            UserManager<User> userManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration)
         {
@@ -84,7 +85,7 @@ namespace MyApp.Controllers
                     new Response { Status = "Error", Message = "Password and Confirm do not match!" });
             }
 
-            IdentityUser user = new()
+            User user = new()
             {
                 Email = request.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
@@ -110,7 +111,7 @@ namespace MyApp.Controllers
             if (userExists != null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
 
-            IdentityUser user = new()
+            User user = new()
             {
                 Email = request.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
@@ -161,7 +162,7 @@ namespace MyApp.Controllers
             
             // 生成重設密碼令牌並發送郵件
             var token = HttpUtility.UrlEncode(await _userManager.GeneratePasswordResetTokenAsync(user));
-            var callbackUrl = _configuration["URL:Frontend"] + $"/reset-password?email={user.Email}&token={token}";
+            var callbackUrl = _configuration["URL:FrontEnd"] + $"/reset-password?email={user.Email}&token={token}";
             
             // HTML 檔案的路徑
             string htmlFilePath = "Files/Email/mail.html";

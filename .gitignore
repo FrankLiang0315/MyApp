@@ -4,6 +4,10 @@
 /.idea/
 /MyApp/bin/
 /MyApp/obj/
+/MyApp/Logs/
+myPublish/
+myPublish.zip
+appsettings.json
 # *.log
 # npm-debug.log*
 # yarn-debug.log*
