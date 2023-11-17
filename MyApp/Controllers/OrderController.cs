@@ -81,6 +81,10 @@ public class OrderController : InfoController
 
         await _context.SaveChangesAsync();
 
+        order.Status = Order.OrderStatus.PendingPayment;
+
+        await _context.SaveChangesAsync();
+
         return Ok(new Response<Order> { Status = "Success", Data = order });
     }
 
@@ -95,6 +99,35 @@ public class OrderController : InfoController
             { Status = "Success", Data = new OrderGetItemsPriceResponse { Items = items } });
     }
 
+    // admin action
+    [HttpGet]
+    [Route("list-all")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<Response<List<Order>>>> OrderListAll()
+    {
+        var orders = await _context.Orders
+            .Include(o => o.User)
+            .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.Pet).ToListAsync();
+        return new Response<List<Order>> { Status = "Success", Data = orders };
+        
+        
+    }
+    
+    [HttpPost]
+    [Route("update-status")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<Response<Order>>> UpdateStatus(OrderUpdateStatusRequest request)
+    {
+        var order = await _context.Orders.FindAsync(request.Id);
+        if (order == null) return new Response<Order> { Status = "Error", Message = "Order not found" };
+        order.Status = request.Status;
+        await _context.SaveChangesAsync();
+        return new Response<Order> { Status = "Success", Data = order };
+    }
+
+
+    // function
     private async Task<List<ItemWithPrice>> getItemsWithPrice(List<Item> items)
     {
         var itemsWithPrice = new List<ItemWithPrice>();

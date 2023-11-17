@@ -10,8 +10,9 @@ public class Order
         Created = 0,
         PendingPayment = 1,
         InProgress = 2,
-        Shipping = 3,
-        Completed = 4
+        PendingLogistics = 3,
+        Shipping = 4,
+        Completed = 5
     }
     
     public int Id { get; set; }
@@ -54,6 +55,24 @@ public class Order
     public int Price { get; set; }
 
     public int PaymentCount { get; set; } = 0;
+
+    [MaxLength(30)]
+    public string? PaymentNumber { get; set; }
+
+    [MaxLength(30)]
+    public string? PaymentManufacturer { get; set; }
+
+    [MaxLength(30)]
+    public string? PaymentType { get; set; }
+    
+    [MaxLength(30)]
+    public string? LogisticsNumber { get; set; }
+    
+    [MaxLength(30)]
+    public string? LogisticsManufacturer { get; set; }
+    
+    [MaxLength(30)]
+    public string? LogisticsType { get; set; }
 
     [Required]
     public DateTime CreatedAt { get; set; }

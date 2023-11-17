@@ -21,8 +21,28 @@ public static class Payment
             return builder.ToString();
         }
     }
+    
+    public static string ComputeMD5(string input)
+    {
+        using (MD5 md5 = MD5.Create())
+        {
+            // 将字符串转换为字节数组
+            byte[] inputBytes = Encoding.UTF8.GetBytes(input);
 
-    public static string PrepareHtmlString(Dictionary<string, string> fields)
+            // 计算 MD5 散列值
+            byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+            // 将字节数组转换为十六进制字符串
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                stringBuilder.Append(hashBytes[i].ToString("x2"));
+            }
+            return stringBuilder.ToString();
+        }
+    }
+
+    public static string PrepareHtmlString(string url, Dictionary<string, string> fields)
     {
         string htmlString = "<html>" +
                             "<head>" +
@@ -31,7 +51,7 @@ public static class Payment
                             "window.onload = function() {document.getElementById('ecForm').submit();}</script>" +
                             "</head>" +
                             "<body>" +
-                            "<form id='ecForm' action='https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5' method='post' hidden enctype='application/x-www-form-urlencoded'>";
+                            $"<form id='ecForm' action='{url}' method='post' hidden enctype='application/x-www-form-urlencoded'>";
         foreach (var keyValuePair in fields)
         {
             htmlString += $"<input name='{keyValuePair.Key}' value='{keyValuePair.Value}'></input>";
